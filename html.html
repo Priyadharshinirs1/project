@@ -1,97 +1,442 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI-Based Skin Disease Detection</title>
+    <meta name="theme-color" content="#f4f8fc">
+    <title>DermaCare | Skin Image Analysis</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #167d91;
+            --primary-dark: #105e70;
+            --text: #193247;
+            --muted: #687b8d;
+            --border: #dce7ed;
+            --background: #f2f7fa;
+        }
+
         body {
+            min-height: 100vh;
+            padding: 30px 16px;
+            font-family: Arial, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, #dff3f3, transparent 42%),
+                var(--background);
+        }
+
+        .page {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        header {
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            background-color: #f3f4f6;
-            font-family: Arial, sans-serif;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: white;
+            font-size: 26px;
+        }
+
+        header h1 {
+            font-size: 25px;
+        }
+
+        header p {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .card {
+            padding: 32px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(25, 50, 71, 0.08);
+        }
+
+        .intro {
+            margin-bottom: 28px;
             text-align: center;
         }
-        .container {
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+        .intro h2 {
+            margin-bottom: 12px;
+            font-size: 28px;
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
+
+        .intro p {
+            max-width: 520px;
+            margin: auto;
+            color: var(--muted);
+            line-height: 1.7;
         }
-        input {
-            margin-bottom: 20px;
+
+        .upload-area {
+            padding: 28px 18px;
+            text-align: center;
+            background: #f8fbfd;
+            border: 2px dashed #b8d2de;
+            border-radius: 15px;
         }
-        img {
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+
+        .upload-area:focus-within {
+            border-color: var(--primary);
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #007bff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+
+        .upload-icon {
+            margin-bottom: 12px;
+            font-size: 40px;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result {
-            margin-top: 20px;
+
+        .upload-area h3 {
+            margin-bottom: 8px;
             font-size: 18px;
+        }
+
+        .upload-area p {
+            margin-bottom: 18px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            max-width: 360px;
+            margin: auto;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: white;
+        }
+
+        input:focus-visible,
+        button:focus-visible {
+            outline: 3px solid #e9a928;
+            outline-offset: 3px;
+        }
+
+        .preview {
+            display: none;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .preview.visible {
+            display: block;
+        }
+
+        .preview h3 {
+            margin-bottom: 14px;
+        }
+
+        .image-frame {
+            display: grid;
+            place-items: center;
+            min-height: 180px;
+            padding: 12px;
+            background: #f5f8fa;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        #uploadedImage {
+            display: block;
+            max-width: 100%;
+            max-height: 340px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        #fileName {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: bold;
-            color: red;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary-btn {
+            color: white;
+            background: var(--primary);
+        }
+
+        .primary-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .secondary-btn {
+            color: var(--text);
+            background: #eaf0f4;
+        }
+
+        .secondary-btn:hover {
+            background: #dce6ed;
+        }
+
+        #statusMessage {
+            min-height: 24px;
+            margin-top: 18px;
+            color: var(--primary-dark);
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .notice {
+            margin-top: 24px;
+            padding: 16px;
+            color: #70541b;
+            background: #fff8e7;
+            border: 1px solid #f0dba9;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .notice strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        footer {
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 22px 16px;
+            }
+
+            .intro h2 {
+                font-size: 23px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>AI-Based Skin Disease Detection</h1>
-        <input type="file" accept="image/*" id="imageInput">
-        <br>
-        <img id="uploadedImage" style="display:none;" alt="Uploaded Image">
-        <br>
-        <button onclick="handleDetect()">Detect Skin Disease</button>
-        <p class="result" id="resultText"></p>
-    </div>
+    <main class="page">
+        <header>
+            <div class="logo" aria-hidden="true">✚</div>
+            <div>
+                <h1>DermaCare</h1>
+                <p>Skin Image Review Interface</p>
+            </div>
+        </header>
+
+        <section class="card">
+            <div class="intro">
+                <h2>Skin Image Viewer</h2>
+                <p>
+                    Upload a skin image to preview it in this simple,
+                    user-friendly demonstration interface.
+                </p>
+            </div>
+
+            <div class="upload-area">
+                <div class="upload-icon" aria-hidden="true">🖼️</div>
+                <h3>Upload Your Image</h3>
+                <p>Choose a JPG, PNG, or WEBP image (maximum 10 MB).</p>
+
+                <label for="imageInput">Select an image file</label>
+                <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-describedby="uploadHelp"
+                >
+
+                <p id="uploadHelp" style="margin: 12px 0 0;">
+                    Your image is previewed locally in this browser.
+                </p>
+            </div>
+
+            <section
+                class="preview"
+                id="previewSection"
+                aria-labelledby="previewTitle"
+            >
+                <h3 id="previewTitle">Image Preview</h3>
+                <div class="image-frame">
+                    <img
+                        id="uploadedImage"
+                        alt="Preview of the selected skin image"
+                    >
+                </div>
+                <p id="fileName"></p>
+            </section>
+
+            <div class="actions">
+                <button type="button" class="primary-btn" id="reviewButton">
+                    Check Analysis Status
+                </button>
+                <button type="button" class="secondary-btn" id="clearButton">
+                    Clear Image
+                </button>
+            </div>
+
+            <p id="statusMessage" role="status" aria-live="polite">
+                Select an image to get started.
+            </p>
+
+            <aside class="notice">
+                <strong>Medical Disclaimer</strong>
+                This demonstration does not have a trained AI model
+                connected. It cannot detect melanoma or diagnose skin
+                diseases. Please consult a qualified dermatologist about
+                concerning or changing skin lesions.
+            </aside>
+        </section>
+
+        <footer>
+            Educational demonstration only. No medical diagnosis is provided.
+        </footer>
+    </main>
 
     <script>
         const imageInput = document.getElementById("imageInput");
         const uploadedImage = document.getElementById("uploadedImage");
-        const resultText = document.getElementById("resultText");
+        const previewSection = document.getElementById("previewSection");
+        const fileName = document.getElementById("fileName");
+        const statusMessage = document.getElementById("statusMessage");
+        const reviewButton = document.getElementById("reviewButton");
+        const clearButton = document.getElementById("clearButton");
 
-        imageInput.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                uploadedImage.src = URL.createObjectURL(file);
-                uploadedImage.style.display = "block";
-            }
-        });
+        let currentImageUrl = null;
 
-        function handleDetect() {
-            if (!uploadedImage.src) {
-                alert("Please upload an image first.");
+        imageInput.addEventListener("change", () => {
+            const file = imageInput.files[0];
+
+            if (!file) return;
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                resetImage();
+                statusMessage.textContent =
+                    "Unsupported file type. Choose a JPG, PNG, or WEBP image.";
                 return;
             }
-            
-            resultText.textContent = "Analyzing...";
-            setTimeout(() => {
-                resultText.textContent = "Melanoma Detected (High Risk). Please consult a dermatologist.";
-            }, 2000);
+
+            if (file.size > 10 * 1024 * 1024) {
+                resetImage();
+                statusMessage.textContent =
+                    "Image is too large. Please choose a file under 10 MB.";
+                return;
+            }
+
+            if (currentImageUrl) {
+                URL.revokeObjectURL(currentImageUrl);
+            }
+
+            currentImageUrl = URL.createObjectURL(file);
+            uploadedImage.src = currentImageUrl;
+            previewSection.classList.add("visible");
+            fileName.textContent = file.name;
+
+            statusMessage.textContent =
+                "Image loaded successfully. No medical analysis has been performed.";
+        });
+
+        reviewButton.addEventListener("click", () => {
+            if (!imageInput.files.length || !currentImageUrl) {
+                statusMessage.textContent =
+                    "Please select a valid image first.";
+                imageInput.focus();
+                return;
+            }
+
+            statusMessage.textContent =
+                "Image preview is ready. Automated analysis is unavailable because no trained AI model is connected.";
+        });
+
+        function resetImage() {
+            if (currentImageUrl) {
+                URL.revokeObjectURL(currentImageUrl);
+                currentImageUrl = null;
+            }
+
+            imageInput.value = "";
+            uploadedImage.removeAttribute("src");
+            previewSection.classList.remove("visible");
+            fileName.textContent = "";
         }
+
+        clearButton.addEventListener("click", () => {
+            resetImage();
+            statusMessage.textContent =
+                "Image cleared. Select another image to begin.";
+            imageInput.focus();
+        });
+
+        window.addEventListener("beforeunload", () => {
+            if (currentImageUrl) {
+                URL.revokeObjectURL(currentImageUrl);
+            }
+        });
     </script>
 </body>
 </html>
-
